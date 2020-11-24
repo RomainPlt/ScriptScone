@@ -2,17 +2,14 @@ name: demo
 digest: create
 
 services:
-        - name: demo
-          image_name: romainplt/demo
-          mrenclaves: [ ]
-          command: 
-          pwd: /
-          environment:
-                  SCONE_MODE: hw
-
+  - name: demo
+    image_name: romainplt/demo
+    mrenclaves: [fadce3e7796887ec2c5cd64cc1fbc3a5f8b3a44a4a5f5eb00cf171e5ea84e952]
+    pwd: /
+    environment:
+      SCONE_MODE: hw
 
 images:
-        - name: romainplt/demo
-          mrenclaves: [ ]
-          tags: [demo]
-
+  - name: romainplt/demo
+    mrenclaves: [fadce3e7796887ec2c5cd64cc1fbc3a5f8b3a44a4a5f5eb00cf171e5ea84e952] 
+    tags: [demo]

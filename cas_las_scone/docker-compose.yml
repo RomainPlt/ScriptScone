@@ -36,7 +36,7 @@ services:
                       - romain-net
         scone:
                 volumes:
-                      - /home/romain:/home
+                      - ~/script:/home
                 image: sconecuratedimages/public-apps:python-3.7.3-alpine3.10-scone3.0 
                 devices:
                       - "/dev/isgx:/dev/isgx"

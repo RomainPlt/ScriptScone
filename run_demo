@@ -1,49 +1,82 @@
 #!/bin/bash
 
+echo "RUN DEMO AND ATTEST CAS AND POST SESSION"
+
 #demo same repo
 
 #docker build demo
 
 	#get repo
-cd repo 
+
+echo "Building image ..."
+
+cd demo
 ./gradlew build buildImage
 
 	#image name should be romainplt/demo
 
 #get mr enclave pendant le build
 rm logs.txt
+
+echo "Running demo ..."
 docker-compose up -d demo 
 docker-compose logs >> logs.txt
+echo " "
+echo "Getting MrEnclave ..."
 mr=$(cat logs.txt | grep Enclave)
 mr2=${mr#*:}
 mr_enclave=${mr2:1}
+echo "MrEnclave is : $mr_enclave"
 
 #create session à partir du mr enclave et tout et tout
+echo " "
+echo "Creating session ..."
 
-cat > session.yml <<EOF
+sessionfile="session.yml"
+
+if [ -f "$sessionfile" ]; then
+        rm session.yml
+fi
+
+touch ~/script/session.yml
+
+cat > ~/script/session.yml <<EOF
 name: demo
 digest: create
 
 services:
-	- name: demo
-	  image_name: romainplt/demo
-	  mrenclaves: [$mr_enclave]
-	  command:
-	  pwd: /
-	  environment:
-		SCONE_MODE: hw
+  - name: demo
+    image_name: romainplt/demo
+    mrenclaves: [$mr_enclave]
+    pwd: /
+    environment:
+      SCONE_MODE: hw
 
 images:
-	- name: romainplt/demo
-	  mrenclaves: [$mr_enclaves]
-	  tags: [demo]
+  - name: romainplt/demo
+    mrenclaves: [$mr_enclave] 
+    tags: [demo]
 EOF
 
 
 #attest cas
+echo " "
+source ~/script/start_cas -l -f ~/script/cas_las_scone/
 
-./start_cas --local --file cas_las_scone/
+#push session to cas from sconecli image
+echo " "
+echo "Creating session ..."
+docker exec -it scone sh -c "cd home && curl -k -s --cert conf/client.crt --key conf/client-key.key --data-binary @session.yml -X POST https://cas:8081/session"
 
-#push session to cas
+file="session.txt"
+
+if [ -f "$file" ]; then
+	rm session.txt 
+fi
+echo "Pushing session info in session.txt"
+docker exec -it scone sh -c "cd home && curl -k -s --cert conf/client.crt --key conf/client-key.key https://cas:8081/session/demo" >> session.txt
+
+
+
 
 # c'est déjà bien
