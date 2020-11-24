@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#demo same repo
+
+#docker build demo
+
+#get mr enclave pendant le build
+
+#create session à partir du mr enclave et tout et tout
+
+#attest cas
+
+#push session to cas
+
+# c'est déjà bien
