@@ -1,0 +1,128 @@
+#!/bin/bash
+
+remote_cas()
+{
+	echo "CAS is remote, MrEnclave is :"
+	echo $mr_enclave
+	echo "CAS address is :"
+	echo $cas_addr
+	
+	docker run --name sconecli -it sconecli sh -c "scone cas attest $cas_addr $mr_enclave" 
+	
+}
+
+local_cas()
+{
+	echo "CAS is local."
+	echo "CAS folder is : $cas_folder"
+	echo " "
+	cd $cas_folder
+	echo "Checking if containers are up ..."
+	if [ $(docker ps -qa -f name=scone) ] && [ ! $(docker ps -aq -f status=exited -f name=scone) ] && [ $(docker ps -qa -f name=cas) ] && [ ! $(docker ps -aq -f status=exited -f name=cas) ] && [ $(docker ps -qa -f name=las) ] && [ ! $(docker ps -aq -f status=exited -f name=las) ]; then    
+     		echo "Containers are already up. Do you want to restart them ? (y/n) "
+		read answer
+		if [ $answer = y ] || [ $answer = Y ]; then
+	                echo "Cleaning docker's processes ..."  
+	        	docker stop $(docker ps -a -q)
+        	        docker rm $(docker ps -a -q)
+			echo "Starting LAS, CAS, and SconeCliImage ..."
+	                docker-compose up -d
+		fi
+		
+	else 
+		if [ $(docker ps -aq -f status=exited -f name=scone) ]; then
+        		echo "Cleaning docker's processes ..."
+        		docker rm scone
+        	fi
+        	
+        	if [ $(docker ps -aq -f status=exited -f name=cas) ]; then
+        		echo "Cleaning docker's processes ..."
+        		docker rm cas
+        	fi
+        	
+        	if [ $(docker ps -aq -f status=exited -f name=las) ]; then
+        		echo "Cleaning docker's processes ..."
+        		docker rm las
+        	fi
+        	
+		
+		echo "Starting LAS, CAS and SconeCliImage ..."
+		docker-compose up -d
+		
+	fi
+
+	echo "Let's get CAS's MrEnclave ..."
+	mr_enclave=$(docker exec -it cas sh -c "SCONE_HASH=1 /usr/local/bin/cas")
+	echo "CAS's MrEnclave is : "
+	echo $mr_enclave
+	echo " "
+	echo "wait for LAS to be up ..."
+	mr_enclave2=${mr_enclave%?}
+	sleep 2
+	echo "Attesting CAS ..."
+	trust=$(docker exec -it scone  sh -c "scone cas attest -G --only_for_testing-debug cas $mr_enclave2")
+	echo $trust
+
+
+
+}
+
+usage()
+{
+	echo " [-r for remote [-h for mrenclave] [-a for cas addr] | -l for local [-f for folder] [-a for cas addr] ]"
+}
+
+
+
+
+
+########### Main
+echo "ATTESTING CAS SCRIPT"
+state=none
+mrenclave=12345
+cas_addr=1.2.3.4
+cas_folder=./
+
+#docker stop $(docker ps -a -q)
+#docker rm $(docker ps -a -q)
+
+
+
+
+while [ "$1" != "" ]; do
+	case $1 in
+		-r | --remote ) state=remote
+				;;
+		-h | --mrenclave ) 
+				shift
+				mr_enclave=$1
+				;;
+		-l | --local )	state=local
+				;;
+		-f | --folder ) shift
+				cas_folder=$1
+				;;
+		-a | --addr ) 	shift 
+				cas_addr=$1
+				;;
+		-h | --help )	usage
+				exit
+				;;
+		* )		usage
+				exit 1
+	esac
+	shift
+done
+
+if [ $state = remote ]
+then
+	remote_cas
+fi
+if [ $state = local ] 
+then
+	local_cas
+fi
+
+
+
+
