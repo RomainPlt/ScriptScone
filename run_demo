@@ -4,11 +4,45 @@
 
 #docker build demo
 
+	#get repo
+cd repo 
+./gradlew build buildImage
+
+	#image name should be romainplt/demo
+
 #get mr enclave pendant le build
+rm logs.txt
+docker-compose up -d demo 
+docker-compose logs >> logs.txt
+mr=$(cat logs.txt | grep Enclave)
+mr2=${mr#*:}
+mr_enclave=${mr2:1}
 
 #create session à partir du mr enclave et tout et tout
 
+cat > session.yml <<EOF
+name: demo
+digest: create
+
+services:
+	- name: demo
+	  image_name: romainplt/demo
+	  mrenclaves: [$mr_enclave]
+	  command:
+	  pwd: /
+	  environment:
+		SCONE_MODE: hw
+
+images:
+	- name: romainplt/demo
+	  mrenclaves: [$mr_enclaves]
+	  tags: [demo]
+EOF
+
+
 #attest cas
+
+./start_cas --local --file cas_las_scone/
 
 #push session to cas
 
