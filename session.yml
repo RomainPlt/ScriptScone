@@ -4,12 +4,12 @@ digest: create
 services:
   - name: demo
     image_name: romainplt/demo
-    mrenclaves: [fadce3e7796887ec2c5cd64cc1fbc3a5f8b3a44a4a5f5eb00cf171e5ea84e952]
+    mrenclaves: []
     pwd: /
     environment:
       SCONE_MODE: hw
 
 images:
   - name: romainplt/demo
-    mrenclaves: [fadce3e7796887ec2c5cd64cc1fbc3a5f8b3a44a4a5f5eb00cf171e5ea84e952] 
+    mrenclaves: [] 
     tags: [demo]

@@ -10,7 +10,7 @@ echo "RUN DEMO AND ATTEST CAS AND POST SESSION"
 
 echo "Building image ..."
 
-cd demo
+cd demo1
 ./gradlew build buildImage
 
 	#image name should be romainplt/demo
