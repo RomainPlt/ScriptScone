@@ -8,9 +8,18 @@ echo "RUN DEMO AND ATTEST CAS AND POST SESSION"
 
 	#get repo
 
+
+if [ $(docker ps -qa -f name=demo) ]; then
+	if [ ! $(docker ps -aq -f status=exited -f name=las) ]; then
+		docker stop demo
+	fi
+	docker rm demo
+fi
+
+
 echo "Building image ..."
 
-cd demo1
+cd ~/Documents/rest\ app/demo
 ./gradlew build buildImage
 
 	#image name should be romainplt/demo
@@ -27,6 +36,8 @@ mr=$(cat logs.txt | grep Enclave)
 mr2=${mr#*:}
 mr_enclave=${mr2:1}
 echo "MrEnclave is : $mr_enclave"
+
+cd ~/script
 
 #create session à partir du mr enclave et tout et tout
 echo " "
