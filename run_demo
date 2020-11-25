@@ -1,60 +1,137 @@
 #!/bin/bash
 
-echo "RUN DEMO AND ATTEST CAS AND POST SESSION"
 
-#demo same repo
+########################################################################## VARIABLES #######################################################################
 
-#docker build demo
+path_to_app=~/Documents/rest\ app/demo
+name_app=demo
+builder=gradle
+dockerfile=Dockerfile-trusted
+image_name=romainplt/demo
 
-	#get repo
+
+########################################################################## FUNCTIONS #######################################################################
+
+usage()
+{
+	echo "  
+	
+	Run you app in a local CAS.
+	
+		./run_demo [-tag] 
+		./run_demo -p ~/path/to/app/ -n my_app -b gradle	
+		
+		-p --path_to_app    Absolute path. You need to have a docker-compose in the folder you point. Default: ~/Documents/rest\ app/demo
+		-n --name           Your app's name need to be the one you use to run docker-compose? Default: demo
+		-b --builder        docker or gradle ? Default: gradle
+		-d --dockerfile     Default: Dockerfile-trusted (only for docker)
+		-i --image_name     Image name for building in docker. Default: romainplt/demo (only for docker)
+		"
+}	
+	
+	
+remove_docker_containers()
+{
+	echo "Here are the container up (not always running) : "
+	yesorno=yes
+	while [ $yesorno = yes ]; do
+		docker ps -a --format "table {{.Image}}\t{{.Names}}\t{{.Status}}"
+		echo " "
+		echo "Do you want to stop one or more ? (y/n)"
+		read answer
+
+		if [ $answer = y ] || [ $answer = yes ] || [ $answer = Y ]; then
+			yesorno=yes
+			echo "write 'all' if you want to remove them all. Or write one name."
+			read container
+			
+			if [ $container = all ]; then
+				echo "Removing all containers ..."
+				docker stop $(docker ps -a -q)
+		                docker rm $(docker ps -a -q)
+		                yesorno=no
+			else
+				echo "removing container $container"
+				docker stop $container 
+				docker rm $container
+				echo " "
+			fi
+		else 
+			yesorno=no
+		fi
+	done
+		
+}
 
 
-if [ $(docker ps -qa -f name=demo) ]; then
-	if [ ! $(docker ps -aq -f status=exited -f name=las) ]; then
-		docker stop demo
+build_docker()
+{ 
+	if [ $(docker ps -qa -f name=demo) ]; then
+		docker stop demo						
+		docker rm demo
 	fi
-	docker rm demo
-fi
+	echo "Building image ..."
+	cd ~/Documents/rest\ app/demo
+	
+	docker build --file $dockerfile --build-arg JAR_FILE=build/libs/*.jar -t $image_name .
+	
+}
+
+build_gradle()
+{
+	if [ $(docker ps -qa -f name=demo) ]; then
+		docker stop demo						
+		docker rm demo
+	fi
 
 
-echo "Building image ..."
+	echo "Building image ..."
 
-cd ~/Documents/rest\ app/demo
-./gradlew build buildImage
+	cd ~/Documents/rest\ app/demo
 
-	#image name should be romainplt/demo
+	./gradlew build buildImage
+}
 
-#get mr enclave pendant le build
-rm logs.txt
+get_mr_enclave()
+{
+	cd ~/Documents/rest\ app/demo
+	rm logs.txt
+	sleep 1
+	echo "Running demo ..."
+	docker-compose up -d 
+	sleep 10
+	docker-compose logs >> logs.txt
+	#cat logs.txt
+	echo " "
+	echo "Getting MrEnclave ..."
+	mr=$(cat logs.txt | grep Enclave)
+	#echo "$mr"
+	mr2=${mr#*:}
+	#echo "$mr2"
+	mr_enclave=${mr2:1}
+	echo "MrEnclave is : $mr_enclave"
 
-echo "Running demo ..."
-docker-compose up -d demo 
-docker-compose logs >> logs.txt
-echo " "
-echo "Getting MrEnclave ..."
-mr=$(cat logs.txt | grep Enclave)
-mr2=${mr#*:}
-mr_enclave=${mr2:1}
-echo "MrEnclave is : $mr_enclave"
+}
 
-cd ~/script
+create_session()
+{
+	cd ~/script
 
-#create session à partir du mr enclave et tout et tout
-echo " "
-echo "Creating session ..."
+	#create session à partir du mr enclave et tout et tout
+	echo " "
+	echo "Creating session ..."
 
-sessionfile="session.yml"
+	sessionfile="session.yml"
 
-if [ -f "$sessionfile" ]; then
-        rm session.yml
-fi
+	if [ -f "$sessionfile" ]; then
+	        rm session.yml
+	fi
 
-touch ~/script/session.yml
+	touch ~/script/session.yml
 
-cat > ~/script/session.yml <<EOF
+	echo "
 name: demo
 digest: create
-
 services:
   - name: demo
     image_name: romainplt/demo
@@ -62,32 +139,101 @@ services:
     pwd: /
     environment:
       SCONE_MODE: hw
-
 images:
   - name: romainplt/demo
     mrenclaves: [$mr_enclave] 
-    tags: [demo]
-EOF
+    tags: [demo] " >> ~/script/session.yml
+
+	cat ~/script/session.yml
+
+}
+
+attest_cas()
+{
+	echo " "
+	source ~/script/start_cas -l -f ~/script/cas_las_scone/
+}
+
+push_session_to_cas()
+{
+	#push session to cas from sconecli image
+	echo " "
+	echo "Creating session ..."
+	docker exec -it scone sh -c "cd home && curl -k -s --cert conf/client.crt --key conf/client-key.key --data-binary @session.yml -X POST https://cas:8081/session"
+
+	file="session.txt"
+
+	if [ -f "$file" ]; then
+		rm session.txt 
+	fi
+	echo "Pushing session info in session.txt"
+	docker exec -it scone sh -c "cd home && curl -k -s --cert conf/client.crt --key conf/client-key.key https://cas:8081/session/demo" >> session.txt
+}
 
 
-#attest cas
-echo " "
-source ~/script/start_cas -l -f ~/script/cas_las_scone/
+################################################################### SCRIPT ##########################################################################
 
-#push session to cas from sconecli image
-echo " "
-echo "Creating session ..."
-docker exec -it scone sh -c "cd home && curl -k -s --cert conf/client.crt --key conf/client-key.key --data-binary @session.yml -X POST https://cas:8081/session"
-
-file="session.txt"
-
-if [ -f "$file" ]; then
-	rm session.txt 
+if [ "$1" == "" ]; then
+	usage
+	exit
 fi
-echo "Pushing session info in session.txt"
-docker exec -it scone sh -c "cd home && curl -k -s --cert conf/client.crt --key conf/client-key.key https://cas:8081/session/demo" >> session.txt
+
+while [ "$1" != "" ]; do
+	case $1 in
+		-b | --builder )
+			shift 
+			builder=$1
+			;;
+		-p | --path_to_app )
+			shift
+			path_to_app=$1
+			;;
+		-n | --name )
+			shift
+			name_app=$1
+			;;
+		-d | --dockerfile )
+			shift 
+			dockerfile=$1
+			;;
+		-i | --image_name )
+			shift
+			image_name=$1
+			;;
+		-h | --help )
+			usage
+			exit
+			;;
+		* ) 	usage
+			exit
+			;;
+			
+	esac
+	shift
+done
+
+remove_docker_containers
+
+case $builder in
+	gradle | Gradle )
+		build_gradle
+		;;
+	docker | Docker )
+		build_docker
+		;;
+	* )	usage
+		exit
+		;;
+esac
 
 
+get_mr_enclave
+
+create_session
+
+attest_cas
+
+push_session_to_cas
 
 
 # c'est déjà bien

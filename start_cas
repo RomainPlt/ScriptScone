@@ -17,39 +17,41 @@ local_cas()
 	echo "CAS folder is : $cas_folder"
 	echo " "
 	cd $cas_folder
-	echo "Checking if containers are up ..."
-	if [ $(docker ps -qa -f name=scone) ] && [ ! $(docker ps -aq -f status=exited -f name=scone) ] && [ $(docker ps -qa -f name=cas) ] && [ ! $(docker ps -aq -f status=exited -f name=cas) ] && [ $(docker ps -qa -f name=las) ] && [ ! $(docker ps -aq -f status=exited -f name=las) ]; then    
-     		echo "Containers are already up. Do you want to restart them ? (y/n) "
-		read answer
-		if [ $answer = y ] || [ $answer = Y ]; then
-	                echo "Cleaning docker's processes ..."  
-	        	docker stop $(docker ps -a -q)
-        	        docker rm $(docker ps -a -q)
-			echo "Starting LAS, CAS, and SconeCliImage ..."
-	                docker-compose up -d
-		fi
+	#echo "Checking if containers are up ..."
+	#if [ $(docker ps -qa -f name=scone) ] && [ ! $(docker ps -aq -f status=exited -f name=scone) ] && [ $(docker ps -qa -f name=cas) ] && [ ! $(docker ps -aq -f status=exited -f name=cas) ] && [ $(docker ps -qa -f name=las) ] && [ ! $(docker ps -aq -f status=exited -f name=las) ]; then    
+     	#	echo "Containers are already up. Do you want to restart them ? (y/n) "
+	#	read answer
+	#	if [ $answer = y ] || [ $answer = Y ]; then
+	#               echo "Cleaning docker's processes ..."
+	#		docker stop $(docker ps -a -q)
+        #	        docker rm $(docker ps -a -q)
+	#		echo "Starting LAS, CAS, and SconeCliImage ..."
+	#               docker-compose up -d
+	#	fi
 		
-	else 
-		if [ $(docker ps -aq -f status=exited -f name=scone) ]; then
-        		echo "Cleaning docker's processes ..."
-        		docker rm scone
-        	fi
-        	
-        	if [ $(docker ps -aq -f status=exited -f name=cas) ]; then
-        		echo "Cleaning docker's processes ..."
-        		docker rm cas
-        	fi
-        	
-        	if [ $(docker ps -aq -f status=exited -f name=las) ]; then
-        		echo "Cleaning docker's processes ..."
-        		docker rm las
-        	fi
+	#else 
+	#	if [ $(docker ps -aq -f status=exited -f name=scone) ]; then
+        #		echo "Cleaning docker's processes ..."
+        #		docker rm scone
+        #	fi
+        #	
+        #	if [ $(docker ps -aq -f status=exited -f name=cas) ]; then
+        #		echo "Cleaning docker's processes ..."
+        #		docker rm cas
+        #	fi
+        #	
+        #	if [ $(docker ps -aq -f status=exited -f name=las) ]; then
+        #		echo "Cleaning docker's processes ..."
+        #		docker rm las
+        #	fi
         	
 		
-		echo "Starting LAS, CAS and SconeCliImage ..."
-		docker-compose up -d
+	#	echo "Starting LAS, CAS and SconeCliImage ..."
+	#	docker-compose up -d
 		
-	fi
+	#fi
+	
+	docker-compose up -d
 
 	echo "Let's get CAS's MrEnclave ..."
 	mr_enclave=$(docker exec -it cas sh -c "SCONE_HASH=1 /usr/local/bin/cas")
@@ -69,7 +71,13 @@ local_cas()
 
 usage()
 {
-	echo " [-r for remote [-h for mrenclave] [-a for cas addr] | -l for local [-f for folder] [-a for cas addr] ]"
+	echo " [-r for remote 
+		[-h for mrenclave] 
+		[-a for cas addr] | 
+			-l for local 
+					
+		[-f for folder] [-a for cas addr] ]"
+		
 }
 
 
@@ -87,6 +95,9 @@ cas_folder=./
 #docker rm $(docker ps -a -q)
 
 
+if [ "$1" == "" ]; then
+	usage
+fi
 
 
 while [ "$1" != "" ]; do
