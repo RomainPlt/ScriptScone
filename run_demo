@@ -66,19 +66,28 @@ remove_docker_containers()
 
 build_docker()
 { 
+
+	echo " "
+	echo "Killing old app container ..."
 	if [ $(docker ps -qa -f name=demo) ]; then
 		docker stop demo						
 		docker rm demo
 	fi
 	echo "Building image ..."
 	cd ~/Documents/rest\ app/demo
+	rm dockerlogs.txt
 	
-	docker build --file $dockerfile --build-arg JAR_FILE=build/libs/*.jar -t $image_name .
+	docker build --file $dockerfile --no-cache --build-arg JAR_FILE=build/libs/*.jar -t $image_name . >> dockerlogs.txt
+	
+	echo " "
+	
 	
 }
 
 build_gradle()
 {
+	echo " "
+	echo "Killing old app container ..."
 	if [ $(docker ps -qa -f name=demo) ]; then
 		docker stop demo						
 		docker rm demo
@@ -90,11 +99,18 @@ build_gradle()
 	cd ~/Documents/rest\ app/demo
 
 	./gradlew build buildImage
+	echo " "
+		
 }
 
 get_mr_enclave()
 {
 	cd ~/Documents/rest\ app/demo
+	
+	echo "Getting MrEnclave ..."
+	mr_enclave=$(sed -n 17p dockerlogs.txt)
+	echo "MrEnclave is : $mr_enclave"
+	
 	rm logs.txt
 	sleep 1
 	echo "Running demo ..."
@@ -103,14 +119,25 @@ get_mr_enclave()
 	docker-compose logs >> logs.txt
 	#cat logs.txt
 	echo " "
-	echo "Getting MrEnclave ..."
+	echo "Getting Enclave Hash when running ..."
 	mr=$(cat logs.txt | grep Enclave)
 	#echo "$mr"
 	mr2=${mr#*:}
 	#echo "$mr2"
-	mr_enclave=${mr2:1}
-	echo "MrEnclave is : $mr_enclave"
+	mr_compare=${mr2:1}
+	echo "Enclave hash when running app is : $mr_compare"
+	echo " "
+}
 
+mr_enclave_compare()
+{
+	if [ $mr_enclave = $mr_compare ]; then
+		echo "Good news ! MrEnclaves are the same !"
+	else
+		echo "Ewwww ! Bad news, MrEnclaves don't match.
+		Check your Dockerfile, maybe some parameters aren't the same than the ones the developper used."
+	fi
+		
 }
 
 create_session()
@@ -228,6 +255,12 @@ esac
 
 
 get_mr_enclave
+
+sleep 1
+
+mr_enclave_compare
+
+sleep 3
 
 create_session
 
