@@ -1,0 +1,23 @@
+
+version: '3.4'
+services: 
+  demo: 
+    image: romainplt/demo
+    container_name: demo
+    ports:
+      - 8080:8080
+    devices: 
+      - /dev/isgx
+    environment:
+      - SCONE_VERSION=1
+      - SCONE_LOG=7
+      - SCONE_MODE=hw
+      - SCONE_HEAP=2G
+      - JAVA_TOOL_OPTIONS=-Xmx64m
+      - SCONE_CAS_ADDR=8081
+    networks:
+      - romain-net
+
+networks:
+  romain-net:
+    external: true

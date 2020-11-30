@@ -61,6 +61,8 @@ local_cas()
 	echo "wait for LAS to be up ..."
 	mr_enclave2=${mr_enclave%?}
 	sleep 2
+#	echo "CAS provision ..."
+#	trust=$(docker exec -it scone  sh -c "scone cas provision cas -c $mr_enclave2 --config-file ~/script/cas_las_scone/docker-compose.yml with-attestion")
 	echo "Attesting CAS ..."
 	trust=$(docker exec -it scone  sh -c "scone cas attest -G --only_for_testing-debug cas $mr_enclave2")
 	echo $trust

@@ -32,12 +32,12 @@ usage()
 	
 remove_docker_containers()
 {
-	echo "Here are the container up (not always running) : "
+	echo "Here are your current containers (not always running) : "
 	yesorno=yes
 	while [ $yesorno = yes ]; do
 		docker ps -a --format "table {{.Image}}\t{{.Names}}\t{{.Status}}"
 		echo " "
-		echo "Do you want to stop one or more ? (y/n)"
+		echo "Do you want to stop/rm one or several ? (y/n)"
 		read answer
 
 		if [ $answer = y ] || [ $answer = yes ] || [ $answer = Y ]; then
@@ -68,10 +68,11 @@ build_docker()
 { 
 
 	echo " "
-	echo "Killing old app container ..."
+	
 	if [ $(docker ps -qa -f name=demo) ]; then
-		docker stop demo						
-		docker rm demo
+		echo "Killing old app container ..."
+		docker stop $name_app					
+		docker rm $name_app
 	fi
 	echo "Building image ..."
 	cd ~/Documents/rest\ app/demo
@@ -127,6 +128,10 @@ get_mr_enclave()
 	mr_compare=${mr2:1}
 	echo "Enclave hash when running app is : $mr_compare"
 	echo " "
+	echo "Killing demo again"
+	docker stop $name_app
+	docker rm $name_app
+	
 }
 
 mr_enclave_compare()
@@ -197,6 +202,64 @@ push_session_to_cas()
 	docker exec -it scone sh -c "cd home && curl -k -s --cert conf/client.crt --key conf/client-key.key https://cas:8081/session/demo" >> session.txt
 }
 
+get_info()
+{	
+	cd ~/script
+	
+	echo " "
+	echo "Getting Mr Enclave from session ..."
+	
+	hash1=$(cat session.yml | grep mrenclaves)
+	hash2=${hash1:17}
+	if [ "${hash2:0:1}" = "[" ]; then
+		hash2=${hash2:1}
+	fi
+	hash3=${hash2%m*}
+	hash4=${hash3%]*}
+	echo "	MrEnclave got : $hash4"
+	echo " "
+}
+
+verify_session_in_cas()
+{
+
+	echo " "
+	cd ~/script
+	echo "creating docker compose ..."
+	
+	rm docker-compose.yml
+	
+	touch docker-compose.yml
+	echo "
+version: '3.4'
+services: 
+  demo: 
+    image: romainplt/demo
+    container_name: demo
+    ports:
+      - 8080:8080
+    devices: 
+      - /dev/isgx
+    environment:
+      - SCONE_VERSION=1
+      - SCONE_LOG=7
+      - SCONE_MODE=hw
+      - SCONE_HEAP=2G
+      - JAVA_TOOL_OPTIONS=-Xmx64m
+      - SCONE_CAS_ADDR=8081
+    networks:
+      - romain-net
+
+networks:
+  romain-net:
+    external: true">>docker-compose.yml
+      
+      echo " "
+      echo "Running $name_app"
+      docker-compose up demo
+      
+      
+}
 
 ################################################################### SCRIPT ##########################################################################
 
@@ -268,5 +331,8 @@ attest_cas
 
 push_session_to_cas
 
+get_info
+
+verify_session_in_cas
 
 # c'est déjà bien
