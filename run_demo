@@ -3,14 +3,15 @@
 
 ########################################################################## VARIABLES #######################################################################
 
-path_to_app=~/Documents/rest\ app/demo
+path_to_app=~/Documents/rest_app/demo
+path=$(pwd)
 name_app=demo
 builder=gradle
 dockerfile=Dockerfile-trusted
 image_name=romainplt/demo
 poids=1
 taille=1
-
+scone_heap=2G
 
 ########################################################################## FUNCTIONS #######################################################################
 
@@ -23,7 +24,10 @@ usage()
 		./run_demo [-tag] 
 		./run_demo -p ~/path/to/app/ -n my_app -b gradle	
 		
-		-p --path_to_app    Absolute path. You need to have a docker-compose in the folder you point. Default: ~/Documents/rest\ app/demo
+		-p --poids
+		-t --taille 
+		-s --SCONE_HEAP     Modifie la SCONE_HEAP. xG giga / xM mega / xK kilo / x octets 
+		-a --path_to_app    Absolute path. You need to have a docker-compose in the folder you point. Default: ~/Documents/rest\ app/demo
 		-n --name           Your app's name need to be the one you use to run docker-compose? Default: demo
 		-b --builder        docker or gradle ? Default: gradle
 		-d --dockerfile     Default: Dockerfile-trusted (only for docker)
@@ -77,7 +81,7 @@ build_docker()
 		docker rm $name_app
 	fi
 	echo "Building image ..."
-	cd ~/Documents/rest\ app/demo
+	cd $path_to_app
 	rm dockerlogs.txt
 	
 	docker build --file $dockerfile --no-cache --build-arg JAR_FILE=build/libs/*.jar -t $image_name . >> dockerlogs.txt
@@ -100,7 +104,7 @@ build_gradle()
 
 	echo "Building image ..."
 
-	cd ~/Documents/rest\ app/demo
+	cd $path_to_app
 
 	./gradlew build buildImage
 	echo " "
@@ -109,48 +113,47 @@ build_gradle()
 
 get_mr_enclave()
 {
-	cd ~/Documents/rest\ app/demo
+	cd $path_to_app
 	
 	echo "Getting MrEnclave ..."
 	mr_enclave=$(sed -n 17p dockerlogs.txt)
 	echo "MrEnclave is : $mr_enclave"
 	
-	rm logs.txt
-	sleep 1
-	echo "Running demo ..."
-	docker-compose up -d 
-	sleep 10
-	docker-compose logs >> logs.txt
-	#cat logs.txt
-	echo " "
-	echo "Getting Enclave Hash when running ..."
-	mr=$(cat logs.txt | grep Enclave)
-	#echo "$mr"
-	mr2=${mr#*:}
-	#echo "$mr2"
-	mr_compare=${mr2:1}
-	echo "Enclave hash when running app is : $mr_compare"
-	echo " "
-	echo "Killing demo again"
-	docker stop $name_app
-	docker rm $name_app
+#	rm logs.txt
+#	sleep 1
+#	echo "Running demo ..."
+#	docker-compose up -d 
+#	sleep 10
+#	docker-compose logs >> logs.txt
+#	#cat logs.txt
+#	echo " "
+#	echo "Getting Enclave Hash when running ..."
+#	mr=$(cat logs.txt | grep Enclave)
+#	#echo "$mr"
+#	mr2=${mr#*:}
+#	#echo "$mr2"
+#	mr_compare=${mr2:1}
+#	echo "Enclave hash when running app is : $mr_compare"
+#	echo " "
+#	echo "Killing demo again"
+#	docker stop $name_app
+#	docker rm $name_app
 	
 }
 
-mr_enclave_compare()
-{
-	if [ $mr_enclave = $mr_compare ]; then
-		echo "Good news ! MrEnclaves are the same !"
-	else
-		echo "Ewwww ! Bad news, MrEnclaves don't match.
-		Check your Dockerfile, maybe some parameters aren't the same than the ones the developper used."
-	fi
-		
-}
+#mr_enclave_compare()
+#{
+#	if [ $mr_enclave = $mr_compare ]; then
+#		echo "Good news ! MrEnclaves are the same !"
+#	else
+#		echo "Pas le même hash mais c'est normal ça dépend de la HEAP_SIZE et tout a bougé"
+#	fi
+#		
+#}
 
 create_session()
 {
-	cd ~/script
+	cd $path
 
 	#create session à partir du mr enclave et tout et tout
 	echo " "
@@ -162,7 +165,7 @@ create_session()
 	        rm session.yml
 	fi
 
-	touch ~/script/session.yml
+	touch session.yml
 
 	echo "
 name: session_demo
@@ -177,22 +180,23 @@ services:
       JAVA_TOOL_OPTIONS: '-Xmx256m'
       LD_LIBRARY_PATH: '/opt/scone/lib/'
       SECRET_POIDS: $poids
-      SECRET_TAILLE: $taille" >> ~/script/session.yml
+      SECRET_TAILLE: $taille" >> session.yml
 
-	cat ~/script/session.yml
+	cat session.yml
 
 }
 
 attest_cas()
 {
 	echo " "
-	source ~/script/start_cas -l -f ~/script/cas_las_scone/
+	cd $path
+	source start_cas -l -f cas_las_scone/
 }
 
 push_session_to_cas()
 {
 	#push session to cas from sconecli image
-	cd ~/script
+	cd $path
 	echo " "
 	echo "Pushing session ..."
 	rm sessionId.txt	
@@ -217,7 +221,7 @@ push_session_to_cas()
 
 get_info()
 {	
-	cd ~/script
+	cd $path
 	
 	echo " "
 	echo "Getting Mr Enclave from session ..."
@@ -237,7 +241,7 @@ verify_session_in_cas()
 {
 
 	echo " "
-	cd ~/script
+	cd $path
 	echo "creating docker compose ..."
 	
 	rm docker-compose.yml
@@ -259,9 +263,10 @@ services:
       - SCONE_CONFIG_ID=session_demo/demo      
       - SCONE_LOG=7
       - SCONE_MODE=hw
+      - SCONE_HEAP=$scone_heap
+      - SCONE_LD_DEBUG
       - SCONE_CAS_ADDR=cas
-      - SCONE_HEAP=2G
-      - SCONE_ALLOW_DLOPEN=1
+      - SCONE_ALLOW_DLOPEN=2
       - LD_LIBRARY_PATH=/opt/scone/lib/
       - JAVA_TOOL_OPTIONS=-Xmx256m
       - SCONE_ALPINE=1
@@ -292,6 +297,10 @@ fi
 
 while [ "$1" != "" ]; do
 	case $1 in
+		-s | --SCONE_HEAP )
+			shift
+			scone_heap=$1
+			;;
 		-b | --builder )
 			shift 
 			builder=$1
@@ -349,11 +358,7 @@ esac
 
 get_mr_enclave
 
-sleep 1
-
-mr_enclave_compare
-
-sleep 3
+sleep 2
 
 create_session
 

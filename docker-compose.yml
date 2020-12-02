@@ -14,9 +14,10 @@ services:
       - SCONE_CONFIG_ID=session_demo/demo      
       - SCONE_LOG=7
       - SCONE_MODE=hw
+      - SCONE_HEAP=28900K
+      - SCONE_LD_DEBUG
       - SCONE_CAS_ADDR=cas
-      - SCONE_HEAP=2G
-      - SCONE_ALLOW_DLOPEN=1
+      - SCONE_ALLOW_DLOPEN=2
       - LD_LIBRARY_PATH=/opt/scone/lib/
       - JAVA_TOOL_OPTIONS=-Xmx256m
       - SCONE_ALPINE=1

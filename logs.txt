@@ -1,0 +1,2 @@
+Attaching to demo
+[36mdemo    |[0m [SCONE|FATAL] ./tools/starter-exec.c:97:exit_signal(): Segmentation fault
