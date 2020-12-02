@@ -1,14 +1,14 @@
 
-name: demo
-digest: create
+name: session_demo
 services:
   - name: demo
     image_name: romainplt/demo
-    mrenclaves: [fadce3e7796887ec2c5cd64cc1fbc3a5f8b3a44a4a5f5eb00cf171e5ea84e952]
+    mrenclaves: [ad87e11d560a71f0555ff72db7ae9edeb6bb1b3c010d4360357d51138b23498d]
     pwd: /
     environment:
+      CLASSPATH: '/'
       SCONE_MODE: hw
-images:
-  - name: romainplt/demo
-    mrenclaves: [fadce3e7796887ec2c5cd64cc1fbc3a5f8b3a44a4a5f5eb00cf171e5ea84e952] 
-    tags: [demo] 
+      JAVA_TOOL_OPTIONS: '-Xmx256m'
+      LD_LIBRARY_PATH: '/opt/scone/lib/'
+      SECRET_POIDS: 75
+      SECRET_TAILLE: 1.9

@@ -9,12 +9,21 @@ services:
     devices: 
       - /dev/isgx
     environment:
+      - SCONE_LAS_ADDR=las
       - SCONE_VERSION=1
+      - SCONE_CONFIG_ID=session_demo/demo      
       - SCONE_LOG=7
       - SCONE_MODE=hw
+      - SCONE_CAS_ADDR=cas
       - SCONE_HEAP=2G
-      - JAVA_TOOL_OPTIONS=-Xmx64m
-      - SCONE_CAS_ADDR=8081
+      - SCONE_ALLOW_DLOPEN=1
+      - LD_LIBRARY_PATH=/opt/scone/lib/
+      - JAVA_TOOL_OPTIONS=-Xmx256m
+      - SCONE_ALPINE=1
+      - SCONE_SESSION_ID=session_demo
+      - POIDS=75
+      - TAILLE=1.9
+    privileged: true
     networks:
       - romain-net
 
