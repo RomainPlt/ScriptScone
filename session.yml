@@ -3,12 +3,13 @@ name: session_demo
 services:
   - name: demo
     image_name: romainplt/demo
-    mrenclaves: [ec5e565b376d79171f782cc8a7224bf5d9ba25e5bf26fc79a0763eec1d7cdb6e]
+    mrenclaves: [f14e4694961e1d5cad56153e2a7a19376c196e22b89566665f34823c9e8f2a78]
     pwd: /
+    command: 'java -jar /app.jar'
     environment:
       CLASSPATH: '/'
       SCONE_MODE: hw
       JAVA_TOOL_OPTIONS: '-Xmx256m'
-      LD_LIBRARY_PATH: '/opt/scone/lib/'
+      LD_LIBRARY_PATH: '/usr/lib/jvm/java-11-openjdk/lib/server:/usr/lib/jvm/java-11-openjdk/lib:/usr/lib/jvm/java-11-openjdk/../lib'
       SECRET_POIDS: 75
       SECRET_TAILLE: 1.9

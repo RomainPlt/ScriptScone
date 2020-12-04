@@ -6,7 +6,7 @@
 path_to_app=~/Documents/rest_app/demo
 path=$(pwd)
 name_app=demo
-builder=gradle
+
 dockerfile=Dockerfile-trusted
 image_name=romainplt/demo
 poids=1
@@ -28,8 +28,7 @@ usage()
 		-t --taille 
 		-s --SCONE_HEAP     Modifie la SCONE_HEAP. xG giga / xM mega / xK kilo / x octets 
 		-a --path_to_app    Absolute path. You need to have a docker-compose in the folder you point. Default: ~/Documents/rest\ app/demo
-		-n --name           Your app's name need to be the one you use to run docker-compose? Default: demo
-		-b --builder        docker or gradle ? Default: gradle
+		-n --name           Your app's name need to be the one you use to run docker-compose? Default: demo   
 		-d --dockerfile     Default: Dockerfile-trusted (only for docker)
 		-i --image_name     Image name for building in docker. Default: romainplt/demo (only for docker)
 		"
@@ -70,29 +69,9 @@ remove_docker_containers()
 }
 
 
-build_docker()
+build()
 { 
 
-	echo " "
-	echo "docker ..."
-	if [ $(docker ps -qa -f name=demo) ]; then
-		echo "Killing old app container ..."
-		docker stop $name_app					
-		docker rm $name_app
-	fi
-	echo "Building image ..."
-	cd $path_to_app
-	rm dockerlogs.txt
-	
-	docker build --file $dockerfile --no-cache --build-arg JAR_FILE=build/libs/*.jar -t $image_name . >> dockerlogs.txt
-	
-	echo " "
-	
-	
-}
-
-build_gradle()
-{
 	echo " "
 	echo "Gradle ..."
 	echo "Killing old app container ..."
@@ -108,7 +87,16 @@ build_gradle()
 
 	./gradlew build buildImage
 	echo " "
-		
+
+	echo "Building image ..."
+	cd $path_to_app
+	rm dockerlogs.txt
+	
+	docker build --file $dockerfile --no-cache --build-arg JAR_FILE=build/libs/*.jar -t $image_name . >> dockerlogs.txt
+	
+	echo " "
+	
+	
 }
 
 get_mr_enclave()
@@ -119,25 +107,25 @@ get_mr_enclave()
 	mr_enclave=$(sed -n 17p dockerlogs.txt)
 	echo "MrEnclave is : $mr_enclave"
 	
-#	rm logs.txt
-#	sleep 1
-#	echo "Running demo ..."
-#	docker-compose up -d 
-#	sleep 10
-#	docker-compose logs >> logs.txt
-#	#cat logs.txt
-#	echo " "
-#	echo "Getting Enclave Hash when running ..."
-#	mr=$(cat logs.txt | grep Enclave)
-#	#echo "$mr"
-#	mr2=${mr#*:}
-#	#echo "$mr2"
-#	mr_compare=${mr2:1}
-#	echo "Enclave hash when running app is : $mr_compare"
-#	echo " "
-#	echo "Killing demo again"
-#	docker stop $name_app
-#	docker rm $name_app
+	rm logs.txt
+	sleep 1
+	echo "Running demo ..."
+	docker-compose up -d 
+	sleep 10
+	docker-compose logs >> logs.txt
+	#cat logs.txt
+	echo " "
+	echo "Getting Enclave Hash when running ..."
+	mr=$(cat logs.txt | grep Enclave)
+	#echo "$mr"
+	mr2=${mr#*:}
+	#echo "$mr2"
+	mr_compare=${mr2:1}
+	echo "Enclave hash when running app is : $mr_compare"
+	echo " "
+	echo "Killing demo again"
+	docker stop $name_app
+	docker rm $name_app
 	
 }
 
@@ -174,14 +162,15 @@ services:
     image_name: romainplt/demo
     mrenclaves: [$mr_enclave]
     pwd: /
+    command: 'java -jar /app.jar'
     environment:
       CLASSPATH: '/'
       SCONE_MODE: hw
       JAVA_TOOL_OPTIONS: '-Xmx256m'
-      LD_LIBRARY_PATH: '/opt/scone/lib/'
+      LD_LIBRARY_PATH: '/usr/lib/jvm/java-11-openjdk/lib/server:/usr/lib/jvm/java-11-openjdk/lib:/usr/lib/jvm/java-11-openjdk/../lib'
       SECRET_POIDS: $poids
       SECRET_TAILLE: $taille" >> session.yml
-
+						     	
 	cat session.yml
 
 }
@@ -198,6 +187,8 @@ push_session_to_cas()
 	#push session to cas from sconecli image
 	cd $path
 	echo " "
+	echo "ET LE CHEMIN :"
+	echo "$path"
 	echo "Pushing session ..."
 	rm sessionId.txt	
 	docker exec -it scone sh -c "cd home && curl -k -s --cert conf/client.crt --key conf/client-key.key --data-binary @session.yml -X POST https://cas:8081/session" >> sessionId.txt
@@ -209,6 +200,7 @@ push_session_to_cas()
 	rm sessionId.txt 
 	
 	echo $session_id >> sessionId.txt
+	cat sessionId.txt
 	
 	file="session.txt"	
 
@@ -259,21 +251,16 @@ services:
       - /dev/isgx
     environment:
       - SCONE_LAS_ADDR=las
-      - SCONE_VERSION=1
       - SCONE_CONFIG_ID=session_demo/demo      
       - SCONE_LOG=7
       - SCONE_MODE=hw
       - SCONE_HEAP=$scone_heap
-      - SCONE_LD_DEBUG
       - SCONE_CAS_ADDR=cas
-      - SCONE_ALLOW_DLOPEN=2
-      - LD_LIBRARY_PATH=/opt/scone/lib/
-      - JAVA_TOOL_OPTIONS=-Xmx256m
       - SCONE_ALPINE=1
+      - SCONE_FORK=1
       - SCONE_SESSION_ID=session_demo
       - POIDS=$poids
       - TAILLE=$taille
-    privileged: true
     networks:
       - romain-net
 
@@ -283,7 +270,7 @@ networks:
       
       echo " "
       echo "Running $name_app"
-      docker-compose up demo
+      docker-compose run --service-ports -e POIDS="toto" demo
       
       
 }
@@ -300,10 +287,6 @@ while [ "$1" != "" ]; do
 		-s | --SCONE_HEAP )
 			shift
 			scone_heap=$1
-			;;
-		-b | --builder )
-			shift 
-			builder=$1
 			;;
 		-a | --path_to_app )
 			shift
@@ -343,18 +326,7 @@ done
 
 remove_docker_containers
 
-case $builder in
-	gradle | Gradle )
-		build_gradle
-		;;
-	docker | Docker )
-		build_docker
-		;;
-	* )	usage
-		exit
-		;;
-esac
-
+build
 
 get_mr_enclave
 
