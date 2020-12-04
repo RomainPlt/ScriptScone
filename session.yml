@@ -3,7 +3,7 @@ name: session_demo
 services:
   - name: demo
     image_name: romainplt/demo
-    mrenclaves: [f14e4694961e1d5cad56153e2a7a19376c196e22b89566665f34823c9e8f2a78]
+    mrenclaves: [fadce3e7796887ec2c5cd64cc1fbc3a5f8b3a44a4a5f5eb00cf171e5ea84e952]
     pwd: /
     command: 'java -jar /app.jar'
     environment:
@@ -11,5 +11,5 @@ services:
       SCONE_MODE: hw
       JAVA_TOOL_OPTIONS: '-Xmx256m'
       LD_LIBRARY_PATH: '/usr/lib/jvm/java-11-openjdk/lib/server:/usr/lib/jvm/java-11-openjdk/lib:/usr/lib/jvm/java-11-openjdk/../lib'
-      SECRET_POIDS: 75
-      SECRET_TAILLE: 1.9
+      SECRET_POIDS: 54
+      SECRET_TAILLE: 1.6

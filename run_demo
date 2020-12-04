@@ -107,25 +107,25 @@ get_mr_enclave()
 	mr_enclave=$(sed -n 17p dockerlogs.txt)
 	echo "MrEnclave is : $mr_enclave"
 	
-	rm logs.txt
-	sleep 1
-	echo "Running demo ..."
-	docker-compose up -d 
-	sleep 10
-	docker-compose logs >> logs.txt
-	#cat logs.txt
-	echo " "
-	echo "Getting Enclave Hash when running ..."
-	mr=$(cat logs.txt | grep Enclave)
-	#echo "$mr"
-	mr2=${mr#*:}
-	#echo "$mr2"
-	mr_compare=${mr2:1}
-	echo "Enclave hash when running app is : $mr_compare"
-	echo " "
-	echo "Killing demo again"
-	docker stop $name_app
-	docker rm $name_app
+#	rm logs.txt
+#	sleep 1
+#	echo "Running demo ..."
+#	docker-compose up -d 
+#	sleep 10
+#	docker-compose logs >> logs.txt
+#	#cat logs.txt
+#	echo " "
+#	echo "Getting Enclave Hash when running ..."
+#	mr=$(cat logs.txt | grep Enclave)
+#	#echo "$mr"
+#	mr2=${mr#*:}
+#	#echo "$mr2"
+#	mr_compare=${mr2:1}
+#	echo "Enclave hash when running app is : $mr_compare"
+#	echo " "
+#	echo "Killing demo again"
+#	docker stop $name_app
+#	docker rm $name_app
 	
 }
 
@@ -270,7 +270,7 @@ networks:
       
       echo " "
       echo "Running $name_app"
-      docker-compose run --service-ports -e POIDS="toto" demo
+      docker-compose run --service-ports demo
       
       
 }
