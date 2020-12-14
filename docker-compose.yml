@@ -8,6 +8,8 @@ services:
       - 8080:8080
     devices: 
       - /dev/isgx
+    volumes:
+      - demo:/tmp/demo:rw
     environment:
       - SCONE_LAS_ADDR=las
       - SCONE_CONFIG_ID=session_demo/demo      
@@ -18,10 +20,13 @@ services:
       - SCONE_ALPINE=1
       - SCONE_FORK=1
       - SCONE_SESSION_ID=session_demo
-      - POIDS=54
-      - TAILLE=1.6
+      
     networks:
       - romain-net
+
+volumes:
+  demo:
+    external: true
 
 networks:
   romain-net:

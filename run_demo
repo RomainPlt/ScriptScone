@@ -13,6 +13,9 @@ poids=1
 taille=1
 scone_heap=2G
 
+secret=mySecret
+key=myKey
+
 ########################################################################## FUNCTIONS #######################################################################
 
 usage()
@@ -169,7 +172,9 @@ services:
       JAVA_TOOL_OPTIONS: '-Xmx256m'
       LD_LIBRARY_PATH: '/usr/lib/jvm/java-11-openjdk/lib/server:/usr/lib/jvm/java-11-openjdk/lib:/usr/lib/jvm/java-11-openjdk/../lib'
       SECRET_POIDS: $poids
-      SECRET_TAILLE: $taille" >> session.yml
+      SECRET_TAILLE: $taille
+      SECRET: $secret
+      KEY: $key" >> session.yml
 						     	
 	cat session.yml
 
@@ -249,6 +254,8 @@ services:
       - 8080:8080
     devices: 
       - /dev/isgx
+    volumes:
+      - demo:/tmp/demo:rw
     environment:
       - SCONE_LAS_ADDR=las
       - SCONE_CONFIG_ID=session_demo/demo      
@@ -259,10 +266,13 @@ services:
       - SCONE_ALPINE=1
       - SCONE_FORK=1
       - SCONE_SESSION_ID=session_demo
-      - POIDS=$poids
-      - TAILLE=$taille
+      
     networks:
       - romain-net
+
+volumes:
+  demo:
+    external: true
 
 networks:
   romain-net:
@@ -284,7 +294,7 @@ fi
 
 while [ "$1" != "" ]; do
 	case $1 in
-		-s | --SCONE_HEAP )
+		--SCONE_HEAP )
 			shift
 			scone_heap=$1
 			;;
@@ -311,6 +321,14 @@ while [ "$1" != "" ]; do
 		-p | --poids )
 			shift
 			poids=$1
+			;;
+		-s | --secret )
+			shift
+			secret=$1
+			;;
+		-k | --key )
+			shift
+			key=$1
 			;;
 		-h | --help )
 			usage
