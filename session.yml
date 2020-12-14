@@ -11,5 +11,7 @@ services:
       SCONE_MODE: hw
       JAVA_TOOL_OPTIONS: '-Xmx256m'
       LD_LIBRARY_PATH: '/usr/lib/jvm/java-11-openjdk/lib/server:/usr/lib/jvm/java-11-openjdk/lib:/usr/lib/jvm/java-11-openjdk/../lib'
-      SECRET_POIDS: 54
-      SECRET_TAILLE: 1.6
+      SECRET_POIDS: 1
+      SECRET_TAILLE: 1
+      SECRET: sessionSecretIsSecret
+      KEY: sessionKeyEz
