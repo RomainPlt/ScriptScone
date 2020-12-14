@@ -26,7 +26,9 @@ usage()
 		
 		-p --poids
 		-t --taille 
-		-s --SCONE_HEAP     Modifie la SCONE_HEAP. xG giga / xM mega / xK kilo / x octets 
+		-s --secret 
+		-k --key
+		--SCONE_HEAP     Modifie la SCONE_HEAP. xG giga / xM mega / xK kilo / x octets 
 		-a --path_to_app    Absolute path. You need to have a docker-compose in the folder you point. Default: ~/Documents/rest\ app/demo
 		-n --name           Your app's name need to be the one you use to run docker-compose? Default: demo   
 		-d --dockerfile     Default: Dockerfile-trusted (only for docker)
