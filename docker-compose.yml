@@ -20,10 +20,9 @@ services:
       - SCONE_ALPINE=1
       - SCONE_FORK=1
       - SCONE_SESSION_ID=session_demo
-      
     networks:
       - romain-net
-
+     
 volumes:
   demo:
     external: true

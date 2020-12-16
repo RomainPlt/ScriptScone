@@ -11,10 +11,9 @@ dockerfile=Dockerfile-trusted
 image_name=romainplt/demo
 poids=1
 taille=1
-scone_heap=2G
-
 secret=mySecret
 key=myKey
+scone_heap=2G
 
 ########################################################################## FUNCTIONS #######################################################################
 
@@ -240,6 +239,9 @@ verify_session_in_cas()
 {
 
 	echo " "
+	echo "creating docker volume ..."
+	docker volume create --driver local --opt type=non --opt device=$path_to_app --opt o=bind demo
+	echo " "
 	cd $path
 	echo "creating docker compose ..."
 	
@@ -268,10 +270,9 @@ services:
       - SCONE_ALPINE=1
       - SCONE_FORK=1
       - SCONE_SESSION_ID=session_demo
-      
     networks:
       - romain-net
-
+     
 volumes:
   demo:
     external: true
@@ -282,9 +283,18 @@ networks:
       
       echo " "
       echo "Running $name_app"
-      docker-compose run --service-ports demo
+      docker-compose up demo
       
-      
+}
+
+create_and_map_fspf_files()
+{
+
+	echo " "
+	echo " "
+	echo "creating fspf files inside demo"
+	docker exec -it demo sh -c "scone fspf create fspf.pb && scone fspf addr fspf.pb / --kernel / --not-protected && scone fspf addr fspf.pb /tmp/demo/ --encrypted --kernel /tmp/demo/ && scone fspf addf fspf.pb /tmp/demo /tmp/demo /tmp/demo"
+
 }
 
 ################################################################### SCRIPT ##########################################################################
@@ -299,6 +309,14 @@ while [ "$1" != "" ]; do
 		--SCONE_HEAP )
 			shift
 			scone_heap=$1
+			;;
+		-s | --secret )
+			shift
+			secret=$1
+			;;
+		-k | --key )
+			shift
+			key=$1
 			;;
 		-a | --path_to_app )
 			shift
@@ -323,14 +341,6 @@ while [ "$1" != "" ]; do
 		-p | --poids )
 			shift
 			poids=$1
-			;;
-		-s | --secret )
-			shift
-			secret=$1
-			;;
-		-k | --key )
-			shift
-			key=$1
 			;;
 		-h | --help )
 			usage
@@ -361,5 +371,8 @@ push_session_to_cas
 get_info
 
 verify_session_in_cas
+
+#create_and_map_fspf_files
+
 
 # c'est déjà bien
