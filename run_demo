@@ -372,7 +372,7 @@ get_info
 
 verify_session_in_cas
 
-#create_and_map_fspf_files
+create_and_map_fspf_files
 
 
 # c'est déjà bien
