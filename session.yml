@@ -13,5 +13,5 @@ services:
       LD_LIBRARY_PATH: '/usr/lib/jvm/java-11-openjdk/lib/server:/usr/lib/jvm/java-11-openjdk/lib:/usr/lib/jvm/java-11-openjdk/../lib'
       SECRET_POIDS: 1
       SECRET_TAILLE: 1
-      SECRET: hehe
-      KEY: lacle
+      SECRET: verySecret
+      KEY: newSecretIsSecret

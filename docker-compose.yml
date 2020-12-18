@@ -9,7 +9,7 @@ services:
     devices: 
       - /dev/isgx
     volumes:
-      - demo:/tmp/demo:rw
+      - /home/romain/Documents/rest_app/demo/data:/tmp/demo/data:rw
     environment:
       - SCONE_LAS_ADDR=las
       - SCONE_CONFIG_ID=session_demo/demo      

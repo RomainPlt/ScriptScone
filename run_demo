@@ -89,7 +89,7 @@ build()
 
 	cd $path_to_app
 
-	./gradlew build buildImage
+	./gradlew build >> newLog.txt
 	echo " "
 
 	echo "Building image ..."
@@ -108,7 +108,7 @@ get_mr_enclave()
 	cd $path_to_app
 	
 	echo "Getting MrEnclave ..."
-	mr_enclave=$(sed -n 17p dockerlogs.txt)
+	mr_enclave=$(grep -i -A 2 'RUN SCONE_MODE=SIM SCONE_HEAP=2G SCONE_LOG=7 SCONE_HASH=1 SCONE_ALPINE=1 /usr/bin/java' dockerlogs1.txt | sed -n 3p)
 	echo "MrEnclave is : $mr_enclave"
 	
 #	rm logs.txt
@@ -259,7 +259,7 @@ services:
     devices: 
       - /dev/isgx
     volumes:
-      - demo:/tmp/demo:rw
+      - $path_to_app/data:/tmp/demo/data:rw
     environment:
       - SCONE_LAS_ADDR=las
       - SCONE_CONFIG_ID=session_demo/demo      
@@ -293,7 +293,7 @@ create_and_map_fspf_files()
 	echo " "
 	echo " "
 	echo "creating fspf files inside demo"
-	docker exec -it demo sh -c "scone fspf create fspf.pb && scone fspf addr fspf.pb / --kernel / --not-protected && scone fspf addr fspf.pb /tmp/demo/ --encrypted --kernel /tmp/demo/ && scone fspf addf fspf.pb /tmp/demo /tmp/demo /tmp/demo"
+	docker exec -it demo sh -c "scone fspf create fspf.pb"
 
 }
 
@@ -372,7 +372,11 @@ get_info
 
 verify_session_in_cas
 
-create_and_map_fspf_files
+echo "test1"
+
+#create_and_map_fspf_files
+
+echo "test2"
 
 
 # c'est déjà bien
