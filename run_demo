@@ -108,7 +108,7 @@ get_mr_enclave()
 	cd $path_to_app
 	
 	echo "Getting MrEnclave ..."
-	mr_enclave=$(grep -i -A 2 'RUN SCONE_MODE=SIM SCONE_HEAP=2G SCONE_LOG=7 SCONE_HASH=1 SCONE_ALPINE=1 /usr/bin/java' dockerlogs1.txt | sed -n 3p)
+	mr_enclave=$(grep -i -A 2 'RUN SCONE_MODE=SIM SCONE_HEAP=2G SCONE_LOG=7 SCONE_HASH=1 SCONE_ALPINE=1 /usr/bin/java' dockerlogs.txt | sed -n 3p)
 	echo "MrEnclave is : $mr_enclave"
 	
 #	rm logs.txt
@@ -133,6 +133,29 @@ get_mr_enclave()
 	
 }
 
+get_fspf_key_tag()
+{
+	cd $path_to_app
+	
+	echo "getting fspf tag"
+	fspf_tag1=$(grep '<FSPF_TAG>' dockerlogs.txt)
+	fspf_tag1=${fspf_tag1%<*}
+	echo "fspf tag is :"
+	fspf_tag=$(echo $fspf_tag1 | sed 's/.*>//')
+	echo $fspf_tag
+	
+	
+	echo "getting fspf key"
+	fspf_key1=$(grep '<FSPF_KEY>' dockerlogs.txt)
+	fspf_key1=${fspf_key1%<*}
+	echo "fspf key is :"
+	fspf_key=$(echo $fspf_key1 | sed 's/.*>//')
+	echo $fspf_key
+	
+
+	
+}
+	
 #mr_enclave_compare()
 #{
 #	if [ $mr_enclave = $mr_compare ]; then
@@ -166,6 +189,9 @@ services:
     image_name: romainplt/demo
     mrenclaves: [$mr_enclave]
     pwd: /
+    fspf_path: /fspf.pb
+    fspf_key: $fspf_key
+    fspf_tag: $fspf_tag
     command: 'java -jar /app.jar'
     environment:
       CLASSPATH: '/'
@@ -359,6 +385,8 @@ remove_docker_containers
 build
 
 get_mr_enclave
+
+get_fspf_key_tag
 
 sleep 2
 
