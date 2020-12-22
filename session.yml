@@ -2,12 +2,12 @@
 name: session_demo
 services:
   - name: demo
-    image_name: romainplt/demo
+    image_name: demo-image
     mrenclaves: [fadce3e7796887ec2c5cd64cc1fbc3a5f8b3a44a4a5f5eb00cf171e5ea84e952]
     pwd: /
     fspf_path: /fspf.pb
-    fspf_key: 23b3bd3d3ac093691051f86432a8873d684fb2f251c902576e9e0796b3071324
-    fspf_tag: ab682ea58f2159bd2edb81ecc20318cd
+    fspf_key: d7eb46e09aeee82e1edc9a63cca792f9431ab44f6976b23621e8a6cd21e765ec
+    fspf_tag: d6d9bf74425fd000a95ead0e80b85657
     command: 'java -jar /app.jar'
     environment:
       CLASSPATH: '/'
@@ -16,5 +16,14 @@ services:
       LD_LIBRARY_PATH: '/usr/lib/jvm/java-11-openjdk/lib/server:/usr/lib/jvm/java-11-openjdk/lib:/usr/lib/jvm/java-11-openjdk/../lib'
       SECRET_POIDS: 1
       SECRET_TAILLE: 1
-      SECRET: kingof
-      KEY: kong
+      SECRET: EtMichel
+      KEY: Jackey
+      
+images:
+  - name: demo-image
+    volumes:
+      - name: tmp
+        path: /tmp
+        
+volumes:
+  - name: tmp

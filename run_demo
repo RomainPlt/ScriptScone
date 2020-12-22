@@ -186,7 +186,7 @@ create_session()
 name: session_demo
 services:
   - name: demo
-    image_name: romainplt/demo
+    image_name: demo-image
     mrenclaves: [$mr_enclave]
     pwd: /
     fspf_path: /fspf.pb
@@ -201,7 +201,16 @@ services:
       SECRET_POIDS: $poids
       SECRET_TAILLE: $taille
       SECRET: $secret
-      KEY: $key" >> session.yml
+      KEY: $key
+      
+images:
+  - name: demo-image
+    volumes:
+      - name: tmp
+        path: /tmp
+        
+volumes:
+  - name: tmp" >> session.yml
 						     	
 	cat session.yml
 
