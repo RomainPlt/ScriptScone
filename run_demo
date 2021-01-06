@@ -3,12 +3,12 @@
 
 ########################################################################## VARIABLES #######################################################################
 
-path_to_app=~/Documents/rest_app/demo
+path_to_app=~/Documents/rest_app/secret-vault
 path=$(pwd)
-name_app=demo
+name_app=secret-vault
 
 dockerfile=Dockerfile-trusted
-image_name=romainplt/demo
+image_name=romainplt/secret-vault
 poids=1
 taille=1
 secret=mySecret
@@ -23,18 +23,18 @@ usage()
 	
 	Run you app in a local CAS.
 	
-		./run_demo [-tag] 
-		./run_demo -p ~/path/to/app/ -n my_app -b gradle	
+		./run_secretVault [-tag] 
+		./run_secretVault -p ~/path/to/app/ -n my_app -b gradle	
 		
 		-p --poids
 		-t --taille 
 		-s --secret 
 		-k --key
 		--SCONE_HEAP     Modifie la SCONE_HEAP. xG giga / xM mega / xK kilo / x octets 
-		-a --path_to_app    Absolute path. You need to have a docker-compose in the folder you point. Default: ~/Documents/rest\ app/demo
-		-n --name           Your app's name need to be the one you use to run docker-compose? Default: demo   
+		-a --path_to_app    Absolute path. You need to have a docker-compose in the folder you point. Default: ~/Documents/rest_app/secretVault
+		-n --name           Your app's name need to be the one you use to run docker-compose? Default: secretVault   
 		-d --dockerfile     Default: Dockerfile-trusted (only for docker)
-		-i --image_name     Image name for building in docker. Default: romainplt/demo (only for docker)
+		-i --image_name     Image name for building in docker. Default: romainplt/secretVault (only for docker)
 		"
 }	
 	
@@ -79,9 +79,9 @@ build()
 	echo " "
 	echo "Gradle ..."
 	echo "Killing old app container ..."
-	if [ $(docker ps -qa -f name=demo) ]; then
-		docker stop demo						
-		docker rm demo
+	if [ $(docker ps -qa -f name=secret-vault) ]; then
+		docker stop secret-vault						
+		docker rm secret-vault
 	fi
 
 
@@ -183,10 +183,10 @@ create_session()
 	touch session.yml
 
 	echo "
-name: session_demo
+name: session_secret-vault
 services:
-  - name: demo
-    image_name: demo-image
+  - name: secret-vault
+    image_name: secret-vault-image
     mrenclaves: [$mr_enclave]
     pwd: /
     fspf_path: /fspf.pb
@@ -204,13 +204,14 @@ services:
       KEY: $key
       
 images:
-  - name: demo-image
+  - name: secret-vault-image
+    mrenclaves: [$mr_enclave]
     volumes:
-      - name: tmp
-        path: /tmp
+      - name: database
+        path: /tmp/secret-vault/data
         
 volumes:
-  - name: tmp" >> session.yml
+  - name: database" >> session.yml
 						     	
 	cat session.yml
 
@@ -249,7 +250,7 @@ push_session_to_cas()
 		rm session.txt 
 	fi
 	echo "Pushing session info in session.txt"
-	docker exec -it scone sh -c "cd home && curl -k -s --cert conf/client.crt --key conf/client-key.key https://cas:8081/session/session_demo" >> session.txt
+	docker exec -it scone sh -c "cd home && curl -k -s --cert conf/client.crt --key conf/client-key.key https://cas:8081/session/session_secret-vault" >> session.txt
 }
 
 get_info()
@@ -275,7 +276,7 @@ verify_session_in_cas()
 
 	echo " "
 	echo "creating docker volume ..."
-	docker volume create --driver local --opt type=non --opt device=$path_to_app --opt o=bind demo
+	docker volume create --driver local --opt type=non --opt device=$path_to_app --opt o=bind secret-vault
 	echo " "
 	cd $path
 	echo "creating docker compose ..."
@@ -286,30 +287,30 @@ verify_session_in_cas()
 	echo "
 version: '3.4'
 services: 
-  demo: 
-    image: romainplt/demo
-    container_name: demo
+  secret-vault: 
+    image: $image_name
+    container_name: secret-vault
     ports:
       - 8080:8080
     devices: 
       - /dev/isgx
     volumes:
-      - $path_to_app/data:/tmp/demo/data:rw
+      - $path_to_app/data:/tmp/secret-vault/data:rw
     environment:
       - SCONE_LAS_ADDR=las
-      - SCONE_CONFIG_ID=session_demo/demo      
+      - SCONE_CONFIG_ID=session_secret-vault/secret-vault      
       - SCONE_LOG=7
       - SCONE_MODE=hw
       - SCONE_HEAP=$scone_heap
       - SCONE_CAS_ADDR=cas
       - SCONE_ALPINE=1
       - SCONE_FORK=1
-      - SCONE_SESSION_ID=session_demo
+      - SCONE_SESSION_ID=session_secret-vault
     networks:
       - romain-net
      
 volumes:
-  demo:
+  secret-vault:
     external: true
 
 networks:
@@ -318,7 +319,7 @@ networks:
       
       echo " "
       echo "Running $name_app"
-      docker-compose up demo
+      docker-compose up secret-vault
       
 }
 
@@ -327,8 +328,8 @@ create_and_map_fspf_files()
 
 	echo " "
 	echo " "
-	echo "creating fspf files inside demo"
-	docker exec -it demo sh -c "scone fspf create fspf.pb"
+	echo "creating fspf files inside secret-vault"
+	docker exec -it secret-vault sh -c "scone fspf create fspf.pb"
 
 }
 

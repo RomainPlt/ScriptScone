@@ -1,13 +1,13 @@
-
-name: session_secret-vault
+name: session_demo1
 services:
-  - name: secret-vault
-    image_name: secret-vault-image
+  - name: demo1
+    image_name: demo-image1
+    tags: [demo1]
     mrenclaves: [fadce3e7796887ec2c5cd64cc1fbc3a5f8b3a44a4a5f5eb00cf171e5ea84e952]
     pwd: /
     fspf_path: /fspf.pb
-    fspf_key: 701945305d83cd5ed5276e9510ab285ae5234f5c525a997de097daed301e331f
-    fspf_tag: fe42ab7d67197bc677e6082c3cdf8d75
+    fspf_key: f86c5df1573e74a4739d59809f0db901d4e9baa9ea680f5ac9ce34a32c5a2ff4
+    fspf_tag: e2c7134a6ad228d49ec3a0208b0e9cbe
     command: 'java -jar /app.jar'
     environment:
       CLASSPATH: '/'
@@ -16,15 +16,17 @@ services:
       LD_LIBRARY_PATH: '/usr/lib/jvm/java-11-openjdk/lib/server:/usr/lib/jvm/java-11-openjdk/lib:/usr/lib/jvm/java-11-openjdk/../lib'
       SECRET_POIDS: 1
       SECRET_TAILLE: 1
-      SECRET: roro
-      KEY: lasticot
+      SECRET: latetedemamere
+      KEY: jlejure
       
 images:
-  - name: secret-vault-image
+  - name: demo-image1
     mrenclaves: [fadce3e7796887ec2c5cd64cc1fbc3a5f8b3a44a4a5f5eb00cf171e5ea84e952]
+    tags: [demo1]
     volumes:
       - name: database
-        path: /tmp/secret-vault/data
+        path: /tmp/demo/data
         
 volumes:
   - name: database
+
